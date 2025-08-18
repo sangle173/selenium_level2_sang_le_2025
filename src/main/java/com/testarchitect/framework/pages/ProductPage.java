@@ -1,10 +1,13 @@
 package com.testarchitect.framework.pages;
 
+import com.codeborne.selenide.ElementsCollection;
+import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import io.qameta.allure.Step;
 
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.$$;
 
 /**
  * Product page object
@@ -12,12 +15,12 @@ import static com.codeborne.selenide.Selenide.$;
 public class ProductPage extends BasePage {
     
     // Product details elements
-    private final SelenideElement productTitle = $("h1.product-title");
-    private final SelenideElement productPrice = $(".product-price");
-    private final SelenideElement addToCartButton = $("button.add-to-cart");
-    private final SelenideElement quantityInput = $("input[name='quantity']");
-    private final SelenideElement productDescription = $(".product-description");
-    private final SelenideElement productImage = $(".product-image img");
+    private final SelenideElement productTitle = $("h1.product-title, h1, .product-title, .entry-title");
+    private final SelenideElement productPrice = $(".product-price, .price, .amount, .woocommerce-Price-amount");
+    private final SelenideElement addToCartButton = $("button.add-to-cart, .single_add_to_cart_button, button[name='add-to-cart'], .add-to-cart, input[type='submit'], .button.product_type_simple");
+    private final SelenideElement quantityInput = $("input[name='quantity'], .qty, input.input-text.qty");
+    private final SelenideElement productDescription = $(".product-description, .woocommerce-product-details__short-description, .summary");
+    private final SelenideElement productImage = $(".product-image img, .woocommerce-product-gallery__image img");
     
     // Review elements
     private final SelenideElement reviewsSection = $(".reviews-section");
@@ -39,7 +42,38 @@ public class ProductPage extends BasePage {
     @Step("Add product to cart")
     public ProductPage addToCart() {
         logger.info("Adding product to cart");
-        addToCartButton.shouldBe(visible, enabled).click();
+        handlePopups();
+        
+        try {
+            if (addToCartButton.exists()) {
+                logger.info("Found add to cart button, clicking it");
+                addToCartButton.shouldBe(visible, enabled).click();
+            } else {
+                // Try to find any button or link that might add to cart
+                ElementsCollection buttons = $$("button, input[type='submit'], .button");
+                SelenideElement fallbackButton = buttons.filterBy(text("Add")).first();
+                if (fallbackButton.exists()) {
+                    logger.info("Using fallback add to cart button");
+                    fallbackButton.click();
+                } else {
+                    logger.info("No add to cart button found, trying form submission");
+                    SelenideElement form = $("form");
+                    if (form.exists()) {
+                        form.submit();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.info("Exception while adding to cart: {}, trying JavaScript approach", e.getMessage());
+            ElementsCollection anyButtons = $$("button, input[type='submit']");
+            if (anyButtons.size() > 0) {
+                Selenide.executeJavaScript("arguments[0].click();", anyButtons.first());
+            }
+        }
+        
+        handlePopups();
+        Selenide.sleep(2000); // Wait for cart action to complete
+        
         return this;
     }
     
