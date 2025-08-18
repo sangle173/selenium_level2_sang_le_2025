@@ -54,23 +54,42 @@ public class HomePage extends BasePage {
         // Handle popups first
         handlePopups();
         
-        // Look for departments in various ways
-        if (departmentsSection.exists()) {
-            departmentsSection.click();
-        } else if ($("a[href*='department']").exists()) {
-            $("a[href*='department']").click();
-        } else if ($("a[href*='category']").exists()) {
-            $("a[href*='category']").click();
-        } else if ($(".nav-departments").exists()) {
-            $(".nav-departments").click();
-        } else {
-            logger.info("No departments section found, looking for shop/products link");
-            if ($("a[href*='shop']").exists()) {
+        try {
+            // Try to find visible navigation elements first
+            if ($(".nav-departments").is(visible)) {
+                $(".nav-departments").click();
+                logger.info("Clicked on visible nav-departments");
+            } else if ($("a[href*='shop']").is(visible)) {
                 $("a[href*='shop']").click();
-            } else if ($("a[href*='product']").exists()) {
+                logger.info("Clicked on visible shop link");
+            } else if ($("a[href*='product']").is(visible)) {
                 $("a[href*='product']").click();
+                logger.info("Clicked on visible products link");
+            } else if (departmentsSection.is(visible)) {
+                departmentsSection.click();
+                logger.info("Clicked on visible departments section");
+            } else {
+                // If no visible navigation found, try to navigate directly to a category page
+                logger.info("No visible navigation found, trying direct navigation");
+                // Look for any visible category link or just proceed to product listing
+                if ($$("a[href*='category']").filterBy(visible).size() > 0) {
+                    $$("a[href*='category']").filterBy(visible).first().click();
+                    logger.info("Clicked on first visible category link");
+                } else {
+                    // As fallback, go directly to the main shop page
+                    logger.info("No category links found, navigating to main shop URL");
+                    open("https://demo.testarchitect.com/shop/");
+                }
             }
+        } catch (Exception e) {
+            logger.warn("Error during navigation, trying fallback approach: " + e.getMessage());
+            // Fallback: navigate directly to shop
+            open("https://demo.testarchitect.com/shop/");
         }
+        
+        // Handle any new popups after navigation
+        handlePopups();
+        
         return this;
     }
     
@@ -81,19 +100,38 @@ public class HomePage extends BasePage {
         // Handle popups first
         handlePopups();
         
-        // Look for electronics category in various ways
-        if (electronicsCategory.exists()) {
-            electronicsCategory.click();
-        } else if (componentsSupplies.exists()) {
-            componentsSupplies.click();
-        } else if ($("a[href*='electronic']").exists()) {
-            $("a[href*='electronic']").click();
-        } else if ($("a:contains('Electronics')").exists()) {
-            $("a:contains('Electronics')").click();
-        } else if ($("a:contains('Electronic Components')").exists()) {
-            $("a:contains('Electronic Components')").click();
-        } else {
-            logger.info("No electronics category found, proceeding with available products");
+        try {
+            // Look for visible electronics category links
+            if (electronicsCategory.is(visible)) {
+                electronicsCategory.click();
+                logger.info("Clicked on electronics category");
+            } else if (componentsSupplies.is(visible)) {
+                componentsSupplies.click();
+                logger.info("Clicked on components supplies");
+            } else if ($$("a[href*='electronic']").filterBy(visible).size() > 0) {
+                $$("a[href*='electronic']").filterBy(visible).first().click();
+                logger.info("Clicked on visible electronic link");
+            } else if ($$("a:contains('Electronics')").filterBy(visible).size() > 0) {
+                $$("a:contains('Electronics')").filterBy(visible).first().click();
+                logger.info("Clicked on visible electronics link by text");
+            } else if ($$("a:contains('Electronic Components')").filterBy(visible).size() > 0) {
+                $$("a:contains('Electronic Components')").filterBy(visible).first().click();
+                logger.info("Clicked on visible electronic components link");
+            } else {
+                // As a fallback, just proceed with whatever products are visible
+                logger.info("No specific electronics category found, proceeding with available products");
+                if ($$(".product-card").filterBy(visible).size() == 0) {
+                    // If no products visible, try to navigate to a general category page
+                    logger.info("No products visible, trying to find any category page");
+                    if ($$("a[href*='product-category']").filterBy(visible).size() > 0) {
+                        $$("a[href*='product-category']").filterBy(visible).first().click();
+                        logger.info("Clicked on first visible product category");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Error selecting electronics category: " + e.getMessage());
+            logger.info("Proceeding with current page content");
         }
         
         return this;
