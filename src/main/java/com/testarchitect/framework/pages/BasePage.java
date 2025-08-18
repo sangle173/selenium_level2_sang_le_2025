@@ -19,11 +19,17 @@ public abstract class BasePage {
     protected SelenideElement errorMessage = $(".error-message");
     protected SelenideElement successMessage = $(".success-message");
     
-    // Popup elements
+    // Popup elements - General
     protected SelenideElement popupModal = $(".popup, .modal, [role='dialog']");
     protected SelenideElement popupCloseButton = $(".popup .close, .modal .close, [role='dialog'] .close, .popup-close, .modal-close");
     protected SelenideElement popupCloseIcon = $(".popup [class*='close'], .modal [class*='close'], [role='dialog'] [class*='close']");
     protected SelenideElement popupOverlay = $(".popup-overlay, .modal-overlay, .overlay");
+    
+    // PopMaker specific elements
+    protected SelenideElement popMakerOverlay = $(".pum-overlay");
+    protected SelenideElement popMakerContainer = $(".pum-container");
+    protected SelenideElement popMakerCloseButton = $(".pum-close, .popmake-close");
+    protected SelenideElement popMakerCloseX = $(".pum-close.pum-close-x");
     
     @Step("Handle any popups that might appear")
     public void handlePopups() {
@@ -32,7 +38,13 @@ public abstract class BasePage {
             // Wait a moment for popups to appear
             Thread.sleep(2000);
             
-            // Try multiple strategies to close popups
+            // First, try PopMaker specific handling (most common on this site)
+            if (handlePopMakerPopup()) {
+                logger.info("PopMaker popup handled successfully");
+                return;
+            }
+            
+            // Fallback to general popup handling
             if (popupCloseButton.exists() && popupCloseButton.isDisplayed()) {
                 logger.info("Found popup close button, clicking it");
                 popupCloseButton.click();
@@ -42,17 +54,23 @@ public abstract class BasePage {
             } else if (popupOverlay.exists() && popupOverlay.isDisplayed()) {
                 logger.info("Found popup overlay, clicking it to close");
                 popupOverlay.click();
-            } else if (popupModal.exists()) {
-                logger.info("Found popup modal, trying to press ESC");
-                popupModal.pressEscape();
             } else {
-                // Try JavaScript to close popup
+                // Try JavaScript to close popup as final fallback
                 logger.info("Trying JavaScript approach to close popup");
                 com.codeborne.selenide.Selenide.executeJavaScript(
-                    "var popup = document.querySelector('.popup, .modal, [role=\"dialog\"]');" +
-                    "if (popup) { popup.style.display = 'none'; }" +
-                    "var overlay = document.querySelector('.popup-overlay, .modal-overlay, .overlay');" +
-                    "if (overlay) { overlay.style.display = 'none'; }"
+                    "// Close PopMaker popups\n" +
+                    "if (typeof PUM !== 'undefined' && PUM.close) {\n" +
+                    "    PUM.close();\n" +
+                    "}\n" +
+                    "// Hide any visible popups\n" +
+                    "var popups = document.querySelectorAll('.popup, .modal, [role=\"dialog\"], .pum-overlay');\n" +
+                    "for (var i = 0; i < popups.length; i++) {\n" +
+                    "    popups[i].style.display = 'none';\n" +
+                    "    popups[i].style.visibility = 'hidden';\n" +
+                    "    popups[i].setAttribute('aria-hidden', 'true');\n" +
+                    "}\n" +
+                    "// Remove overlay classes\n" +
+                    "document.body.classList.remove('pum-open');"
                 );
             }
             
@@ -60,7 +78,59 @@ public abstract class BasePage {
             Thread.sleep(1000);
             logger.info("Popup handling completed");
         } catch (Exception e) {
-            logger.warn("No popup found or error handling popup: {}", e.getMessage());
+            logger.warn("Error handling popup: {}", e.getMessage());
+            // Force close with JavaScript as ultimate fallback
+            try {
+                com.codeborne.selenide.Selenide.executeJavaScript(
+                    "document.querySelectorAll('.popup, .modal, .pum-overlay').forEach(function(el) { el.style.display = 'none'; });"
+                );
+            } catch (Exception jsError) {
+                logger.warn("JavaScript popup close also failed: {}", jsError.getMessage());
+            }
+        }
+    }
+    
+    @Step("Handle PopMaker specific popup")
+    private boolean handlePopMakerPopup() {
+        try {
+            boolean foundPopup = false;
+            
+            // Check for multiple PopMaker popups (some sites have several)
+            if ($(".pum-overlay").exists()) {
+                logger.info("Found PopMaker overlay(s)");
+                foundPopup = true;
+                
+                // Close all PopMaker popups using comprehensive JavaScript
+                logger.info("Closing all PopMaker popups with JavaScript");
+                com.codeborne.selenide.Selenide.executeJavaScript(
+                    "// Close all PopMaker popups\n" +
+                    "if (typeof PUM !== 'undefined') {\n" +
+                    "    if (PUM.close) PUM.close();\n" +
+                    "    if (PUM.closeAll) PUM.closeAll();\n" +
+                    "}\n" +
+                    "// Force close all visible PopMaker overlays\n" +
+                    "document.querySelectorAll('.pum-overlay, .pum-container').forEach(function(el) {\n" +
+                    "    el.style.display = 'none';\n" +
+                    "    el.style.visibility = 'hidden';\n" +
+                    "    el.setAttribute('aria-hidden', 'true');\n" +
+                    "    el.classList.remove('pum-active');\n" +
+                    "});\n" +
+                    "// Remove PopMaker body classes\n" +
+                    "document.body.classList.remove('pum-open');\n" +
+                    "document.body.classList.remove('pum-active');\n" +
+                    "// Try clicking close buttons if any exist\n" +
+                    "document.querySelectorAll('.pum-close, .popmake-close').forEach(function(btn) {\n" +
+                    "    try { btn.click(); } catch(e) {}\n" +
+                    "});"
+                );
+                
+                Thread.sleep(1000);
+            }
+            
+            return foundPopup;
+        } catch (Exception e) {
+            logger.warn("PopMaker popup handling failed: {}", e.getMessage());
+            return false;
         }
     }
     

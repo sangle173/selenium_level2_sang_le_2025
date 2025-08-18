@@ -29,11 +29,17 @@ public class LoginPage extends BasePage {
         // Check if we need to navigate to login page (if this is a homepage)
         if (!loginForm.exists()) {
             logger.info("Login form not found, looking for login link");
+            
+            // Handle any additional popups before clicking
+            handlePopups();
+            
             if ($("a[href*='login']").exists()) {
                 $("a[href*='login']").click();
             } else if ($("a[href*='sign']").exists()) {
                 $("a[href*='sign']").click();
             } else if ($(".login-link").exists()) {
+                // Handle popup one more time before clicking login link
+                handlePopups();
                 $(".login-link").click();
             } else {
                 logger.info("No login form or login link found, assuming this is a demo site");
