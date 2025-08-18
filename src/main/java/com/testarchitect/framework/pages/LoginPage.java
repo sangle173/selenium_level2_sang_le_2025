@@ -1,0 +1,88 @@
+package com.testarchitect.framework.pages;
+
+import com.codeborne.selenide.SelenideElement;
+import io.qameta.allure.Step;
+
+import static com.codeborne.selenide.Condition.*;
+import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.open;
+
+/**
+ * Login page object
+ */
+public class LoginPage extends BasePage {
+    
+    // Page elements
+    private final SelenideElement usernameField = $("#username");
+    private final SelenideElement passwordField = $("#password");
+    private final SelenideElement loginButton = $("button[type='submit']");
+    private final SelenideElement registerLink = $("a[href*='register']");
+    private final SelenideElement forgotPasswordLink = $("a[href*='forgot']");
+    private final SelenideElement loginForm = $("form#login-form");
+    
+    @Step("Open login page")
+    public LoginPage openLoginPage(String baseUrl) {
+        logger.info("Opening login page at: {}", baseUrl);
+        open(baseUrl);
+        waitForPageToLoad();
+        loginForm.shouldBe(visible);
+        return this;
+    }
+    
+    @Step("Enter username: {username}")
+    public LoginPage enterUsername(String username) {
+        logger.info("Entering username: {}", username);
+        usernameField.shouldBe(visible).clear();
+        usernameField.setValue(username);
+        return this;
+    }
+    
+    @Step("Enter password")
+    public LoginPage enterPassword(String password) {
+        logger.info("Entering password");
+        passwordField.shouldBe(visible).clear();
+        passwordField.setValue(password);
+        return this;
+    }
+    
+    @Step("Click login button")
+    public void clickLoginButton() {
+        logger.info("Clicking login button");
+        loginButton.shouldBe(visible, enabled).click();
+    }
+    
+    @Step("Login with credentials: {username}")
+    public void loginWith(String username, String password) {
+        enterUsername(username);
+        enterPassword(password);
+        clickLoginButton();
+    }
+    
+    @Step("Verify login form is displayed")
+    public LoginPage verifyLoginFormDisplayed() {
+        logger.info("Verifying login form is displayed");
+        loginForm.shouldBe(visible);
+        usernameField.shouldBe(visible);
+        passwordField.shouldBe(visible);
+        loginButton.shouldBe(visible);
+        return this;
+    }
+    
+    @Step("Click register link")
+    public void clickRegisterLink() {
+        logger.info("Clicking register link");
+        registerLink.shouldBe(visible).click();
+    }
+    
+    @Step("Click forgot password link")
+    public void clickForgotPasswordLink() {
+        logger.info("Clicking forgot password link");
+        forgotPasswordLink.shouldBe(visible).click();
+    }
+    
+    @Step("Verify login error message")
+    public void verifyLoginError() {
+        logger.info("Verifying login error message");
+        errorMessage.shouldBe(visible);
+    }
+}

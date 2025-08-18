@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite name="EcommerceTestSuite" verbose="1">
+    <parameter name="browser" value="chrome"/>
+    <parameter name="environment" value="qa"/>
+    
+    <listeners>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+    
+    <test name="Smoke Tests" preserve-order="true">
+        <parameter name="testType" value="smoke"/>
+        <classes>
+            <class name="com.testarchitect.tests.EcommerceTests">
+                <methods>
+                    <include name="testUserCanBuyItemSuccessfully"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+    
+    <test name="Regression Tests" preserve-order="true">
+        <parameter name="testType" value="regression"/>
+        <classes>
+            <class name="com.testarchitect.tests.EcommerceTests">
+                <methods>
+                    <include name="testUserCanBuyItemSuccessfully"/>
+                    <include name="testUserCanBuyMultipleItemsSuccessfully"/>
+                    <include name="testUserCanBuyItemWithDifferentPaymentMethods"/>
+                    <include name="testUserCanSortItemsByPrice"/>
+                    <include name="testOrdersAppearInOrderHistory"/>
+                </methods>
+            </class>
+            <class name="com.testarchitect.tests.ExtendedEcommerceTests">
+                <methods>
+                    <include name="testUserTryToBuyItemWithoutLoggingIn"/>
+                    <include name="testErrorHandlingForMandatoryFields"/>
+                    <include name="testUserCanClearCart"/>
+                    <include name="testUserCanUpdateProductQuantity"/>
+                    <include name="testUserCanPostReview"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+    
+    <test name="Critical Path Tests" preserve-order="true">
+        <parameter name="testType" value="critical"/>
+        <classes>
+            <class name="com.testarchitect.tests.EcommerceTests">
+                <methods>
+                    <include name="testUserCanBuyItemSuccessfully"/>
+                    <include name="testUserCanBuyItemWithDifferentPaymentMethods"/>
+                </methods>
+            </class>
+            <class name="com.testarchitect.tests.ExtendedEcommerceTests">
+                <methods>
+                    <include name="testErrorHandlingForMandatoryFields"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>
