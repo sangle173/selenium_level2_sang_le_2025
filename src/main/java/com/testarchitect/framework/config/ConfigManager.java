@@ -92,10 +92,6 @@ public class ConfigManager {
         return getIntProperty("app.timeout", 10000);
     }
 
-    public String getTestDataPath() {
-        return getProperty("testdata.excel.path");
-    }
-
     public boolean isGridEnabled() {
         return getBooleanProperty("grid.enabled", false);
     }
