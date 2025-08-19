@@ -3,6 +3,7 @@ package com.testarchitect.framework.config;
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
@@ -44,6 +45,32 @@ public class BaseTest {
         Configuration.headless = config.isHeadless();
         Configuration.browserSize = config.getBrowserSize();
         Configuration.timeout = config.getTimeout();
+        
+        // Firefox specific configuration
+        if ("firefox".equalsIgnoreCase(config.getBrowser())) {
+            String firefoxBinary = config.getFirefoxBinaryPath();
+            if (firefoxBinary != null && !firefoxBinary.isEmpty()) {
+                FirefoxOptions firefoxOptions = new FirefoxOptions();
+                firefoxOptions.setBinary(firefoxBinary);
+                // Add additional Firefox preferences for better compatibility
+                firefoxOptions.addPreference("browser.startup.page", 0);
+                firefoxOptions.addPreference("browser.startup.homepage_override.mstone", "ignore");
+                firefoxOptions.addPreference("browser.usedOnWindows10", false);
+                firefoxOptions.addPreference("dom.disable_beforeunload", true);
+                firefoxOptions.addPreference("network.http.max-connections", 200);
+                firefoxOptions.addPreference("network.http.max-connections-per-server", 20);
+                firefoxOptions.addPreference("dom.max_script_run_time", 0);
+                firefoxOptions.addPreference("dom.max_chrome_script_run_time", 0);
+                firefoxOptions.addPreference("browser.cache.disk.enable", false);
+                firefoxOptions.addPreference("browser.cache.memory.enable", false);
+                firefoxOptions.addPreference("browser.cache.offline.enable", false);
+                firefoxOptions.addPreference("network.http.use-cache", false);
+                Configuration.browserCapabilities = firefoxOptions;
+                Configuration.pageLoadTimeout = 120000; // 2 minutes
+                Configuration.timeout = 60000; // 60 seconds
+                logger.info("Firefox binary path set to: {}", firefoxBinary);
+            }
+        }
         
         // Additional Selenide configurations
         Configuration.screenshots = true;
