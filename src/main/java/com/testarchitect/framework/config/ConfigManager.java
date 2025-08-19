@@ -84,6 +84,10 @@ public class ConfigManager {
         return getProperty("browser.size", "1920x1080");
     }
 
+    public String getFirefoxBinaryPath() {
+        return getProperty("firefox.binary.path");
+    }
+
     public int getTimeout() {
         return getIntProperty("app.timeout", 10000);
     }
